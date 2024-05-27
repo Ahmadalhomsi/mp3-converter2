@@ -4,6 +4,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import DownloadHistory from "@/components/DownloadHistory";
 import ReactLoading from "react-loading";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import Image from "next/image";
 const youtube = require('youtube-metadata-from-url');
@@ -55,7 +56,8 @@ export default function Home() {
       // Handle error if needed
     }
   }
-
+  const data = useUser();
+  const user = data.user;
   
 
 
@@ -74,6 +76,26 @@ export default function Home() {
       setDownloadHistory(JSON.parse(history));
     }
 
+    const checkUserType = async () => {
+      const unsafeMetadata = user?.unsafeMetadata; // Use with caution
+      // console.log(user);
+
+      userType = unsafeMetadata?.UserType as string;
+
+      console.log("User Type: ");
+      console.log(userType);
+
+      if (userType === "Premium") {
+        console.log("No ads");
+        setIsPremium(true)
+      }
+      else
+        setIsPremium(false)
+
+
+    };
+
+    checkUserType();
 
   }, []);
 
@@ -195,9 +217,15 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2 gap-y-2">
       {thumbnailUrl && (
-        <div className="thumbnail-frame mt-4">
-          <Image  src={thumbnailUrl} alt="Thumbnail" className=" h-auto max-w-lg rounded-2xl	" style={{ maxWidth: '400px', maxHeight: '400px' }} layout="fill"/>
-        </div>
+        <div className="thumbnail-frame mt-4" style={{ position: 'relative', width: '400px', height: '400px' }}>
+        <Image 
+          src={thumbnailUrl} 
+          alt="Thumbnail" 
+          className="h-auto max-w-lg rounded-2xl" 
+          layout="fill" 
+          objectFit="cover" // or 'contain', 'none', 'scale-down' depending on your needs
+        />
+      </div>
       )}
 
       {(loadingMp3 || loadingMp4) && <ReactLoading type={"cylon"} color="#fff" />

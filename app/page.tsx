@@ -58,7 +58,7 @@ export default function Home() {
   }
   const data = useUser();
   const user = data.user;
-  
+
 
 
   useEffect(() => {
@@ -217,15 +217,15 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2 gap-y-2">
       {thumbnailUrl && (
-        <div className="thumbnail-frame mt-4" style={{ position: 'relative', width: '400px', height: '400px' }}>
-        <Image 
-          src={thumbnailUrl} 
-          alt="Thumbnail" 
-          className="h-auto max-w-lg rounded-2xl" 
-          layout="fill" 
-          objectFit="cover" // or 'contain', 'none', 'scale-down' depending on your needs
-        />
-      </div>
+        <div className="thumbnail-frame mt-4 relative w-full max-w-lg" style={{ aspectRatio: '16/9' }}>
+          <Image
+            src={thumbnailUrl}
+            alt="Thumbnail"
+            className="rounded-2xl"
+            layout="fill"
+            objectFit="cover" // or 'contain' if you want to see the entire image without cropping
+          />
+        </div>
       )}
 
       {(loadingMp3 || loadingMp4) && <ReactLoading type={"cylon"} color="#fff" />

@@ -196,7 +196,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen py-2 gap-y-2">
       {thumbnailUrl && (
         <div className="thumbnail-frame mt-4">
-          <Image src={thumbnailUrl} alt="Thumbnail" className=" h-auto max-w-lg rounded-2xl	" style={{ maxWidth: '400px', maxHeight: '400px' }} />
+          <Image  src={thumbnailUrl} alt="Thumbnail" className=" h-auto max-w-lg rounded-2xl	" style={{ maxWidth: '400px', maxHeight: '400px' }} layout="fill"/>
         </div>
       )}
 

@@ -5,11 +5,6 @@ interface LoadingContextProps {
   toggleLoading: () => void;
 }
 
-/*
-  Interface ve methods kısımları Ibrahim Arda ya aittir. Geri kalan kısımlar Ahmad Alhomsi ye aittir. 
-
-
-*/
 
 const LoadingContext = createContext<LoadingContextProps>({
   isLoading: false,

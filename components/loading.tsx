@@ -1,5 +1,8 @@
 import React, { createContext, useState, useContext } from "react";
 
+ /*
+  Interface ve oop componentler Ibrahim Arda Doğan a aittir. Kalan kısım ise Ahmad Alhomsi ye aittir.
+  */
 interface LoadingContextProps {
   isLoading: boolean;
   toggleLoading: () => void;

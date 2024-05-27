@@ -1,113 +1,270 @@
+"use client"
+import { useEffect, useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import DownloadHistory from "@/components/DownloadHistory";
+import ReactLoading from "react-loading";
+import Link from "next/link";
 import Image from "next/image";
+const youtube = require('youtube-metadata-from-url');
+
+
+
+
 
 export default function Home() {
+  const [loadingMp3, setLoadingMp3] = useState(false);
+  const [loadingMp4, setLoadingMp4] = useState(false);
+  const [youtubeLink, setYoutubeLink] = useState("");
+  const [error, setError] = useState("");
+  const [lastDownloadedLink, setLastDownloadedLink] = useState('');
+  const [downloadHistory, setDownloadHistory] = useState<Array<{
+    url: string;
+    fileName: string;
+    timestamp: Date;
+  }>>([]);
+  const [thumbnailUrl, setThumbnailUrl] = useState(""); // Add state for the thumbnail URL
+  const [isPremium, setIsPremium] = useState(true);
+  const [selectedQuality, setSelectedQuality] = useState('highest');
+
+
+
+  interface DownloadItem {
+    url: string;
+    fileName: string;
+    timestamp: Date;
+  }
+
+  // Function to handle changes in quality selection
+  const handleQualityChange = (event: any) => {
+    setSelectedQuality(event.target.value);
+  };
+
+  const handleHistoryItemClick = (url: string) => {
+    setYoutubeLink(url); // Set the input value to the clicked download history item URL
+  };
+
+  async function fetchThumbnail() {
+    try {
+      const response = await axios.post('/api/getThumbnail', { url: youtubeLink }); // Assuming the backend API returns thumbnail URL directly
+      setThumbnailUrl(response.data); // Set the thumbnail URL in state
+      console.log("Thumbnail Link: " + response.data);
+
+    } catch (error) {
+      console.log('Error fetching thumbnail:', error);
+      // Handle error if needed
+    }
+  }
+
+  
+
+
+  useEffect(() => {
+    let userType: string;
+
+    // Retrieve the last downloaded link from cookies when the component mounts
+    const lastLink = getCookie('lastDownloadedLink');
+    if (lastLink) {
+      setLastDownloadedLink(lastLink);
+    }
+
+    // Retrieve download history from cookies
+    const history = getCookie('downloadHistory');
+    if (history) {
+      setDownloadHistory(JSON.parse(history));
+    }
+
+
+  }, []);
+
+  async function getTitle(url: string) {
+    try {
+      const jsonx = await youtube.metadata(url);
+      console.log(jsonx);
+      return jsonx.title;
+    } catch (err) {
+      console.log("Error getTitle");
+      return err; // or handle the error as needed
+    }
+  }
+
+
+  async function downloadFile(url: string, type: string) {
+    try {
+
+      // Set the last downloaded link in cookies
+
+      setCookie('lastDownloadedLink', url, 1);
+      console.log("Cookie Set: " + url);
+
+      if (type === 'mp3') {
+        setLoadingMp3(true);
+      } else {
+        setLoadingMp4(true);
+      }
+
+      setError("");
+
+
+      const response = await axios.post('/api/yt', { url, type, selectedQuality }, { responseType: 'blob' });
+
+      const blobUrl = URL.createObjectURL(response.data);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+
+
+      const title = await getTitle(url);
+      const fileName = `${title}.${type}`;
+
+      console.log("Video to download: " + title); // Use the title here
+
+
+      link.download = `${title}.${type}`;
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+
+      fetchThumbnail();
+
+      toast.success('Video successfully downloaded');
+
+      // Update download history
+      const updatedHistory = [{ url, fileName, timestamp: new Date() }, ...downloadHistory];
+      setDownloadHistory(updatedHistory);
+      setCookie('downloadHistory', JSON.stringify(updatedHistory), 10); // 7 days expiration
+
+      if (type === 'mp3') {
+        setLoadingMp3(false);
+      } else {
+        setLoadingMp4(false);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      if (type === 'mp3') {
+        setLoadingMp3(false);
+      } else {
+        setLoadingMp4(false);
+      }
+      setError("Invalid YouTube link or unable to download the video.");
+      toast.error("Invalid YouTube link or unable to download the video.");
+    }
+  }
+
+  function handleInputChange(event: any) {
+    setYoutubeLink(event.target.value);
+  }
+
+  async function handleDownload(type: string) {
+    if (!youtubeLink.trim()) {
+      setError("Please enter a YouTube link.");
+      toast.error("Please enter a YouTube link.");
+      return;
+    }
+
+    // Reset error message
+    setError("");
+
+    // Attempt to download the file
+    await downloadFile(youtubeLink, type);
+  }
+
+  // Function to set a cookie
+  function setCookie(name: string, value: any, hours: number) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + hours * 60 * 60 * 1000); // Convert minutes to milliseconds
+    document.cookie = `${name}###${value};expires=${expires.toUTCString()};path=/`;
+  }
+
+  // Function to get a cookie
+  function getCookie(name: string) {
+    const cookies = document.cookie.split('; ');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].split('###');
+      if (cookie[0] === name) {
+        return cookie[1];
+      }
+    }
+    return '';
+  }
+
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="flex flex-col items-center justify-center min-h-screen py-2 gap-y-2">
+      {thumbnailUrl && (
+        <div className="thumbnail-frame mt-4">
+          <Image src={thumbnailUrl} alt="Thumbnail" className=" h-auto max-w-lg rounded-2xl	" style={{ maxWidth: '400px', maxHeight: '400px' }} />
         </div>
-      </div>
+      )}
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      {(loadingMp3 || loadingMp4) && <ReactLoading type={"cylon"} color="#fff" />
+      }
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+
+      <div>
+        <input
+          type="text"
+          value={youtubeLink}
+          onChange={handleInputChange}
+          placeholder="Enter YouTube link"
+          className="rounded-md px-3 py-2 mr-2 mb-1 w-96 text-blue-600 focus:outline-none"
         />
+
+
+        <select value={selectedQuality} onChange={handleQualityChange} className="rounded-md px-2 py-2 mt-1 mb-1 w-32  text-blue-600 focus:outline-none">
+          <option value="default" disabled>Select Quality</option>
+          <option value="lowest">Lowest</option>
+          <option value="highest">Highest</option>
+        </select>
+
       </div>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
+      <div className="flex">
+        <button
+          onClick={() => handleDownload('mp3')}
+          disabled={loadingMp3}
+          className="bg-blue-900 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg mr-2"
         >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
+          {loadingMp3 ? "Downloading..." : "Download MP3"}
+        </button>
+        <button
+          onClick={() => handleDownload('mp4')}
+          disabled={loadingMp4}
+          className="bg-blue-900 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg mr-2"
         >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+          {loadingMp4 ? "Downloading..." : "Download MP4"}
+        </button>
       </div>
-    </main>
+      {lastDownloadedLink && <div className="mt-4">Last link: {lastDownloadedLink}</div>}
+
+      {downloadHistory.length > 0 && <DownloadHistory downloadHistory={downloadHistory} onHistoryItemClick={handleHistoryItemClick} />} {/* Use the DownloadHistory component */}
+
+
+
+
+
+      <Ad isPremium={isPremium} />
+    </div>
+
   );
+
+  function Ad({ isPremium }: { isPremium: boolean }) {
+    return (
+      <>
+        {!isPremium && (
+          <div className="fixed bottom-0 left-0 w-full bg-gray-200 bg-opacity-70 p-6 flex justify-center">
+            <div className="ad-content">
+              <p className="text-gray-800">AD</p>
+              {/* Other ad content */}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+
 }

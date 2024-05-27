@@ -2,16 +2,23 @@
 
 import React from "react";
 
+/*
+ Interface ve oop componentler Ibrahim Arda Doğan a aittir. Kalan kısım ise Ahmad Alhomsi ye aittir.
+ */
 interface DownloadItem {
   url: string;
   fileName: string;
   timestamp: Date;
 }
 
+/*
+ Interface ve oop componentler Ibrahim Arda Doğan a aittir. Kalan kısım ise Ahmad Alhomsi ye aittir.
+ */
 interface DownloadHistoryProps {
   downloadHistory: DownloadItem[];
   onHistoryItemClick: (url: string) => void; // Callback function to set the input value
 }
+
 
 
 const DownloadHistory: React.FC<DownloadHistoryProps> = ({ downloadHistory, onHistoryItemClick }) => {

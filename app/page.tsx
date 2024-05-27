@@ -36,6 +36,10 @@ export default function Home() {
     timestamp: Date;
   }
 
+  /*
+  Interface ve oop componentler Ibrahim Arda Doğan a aittir. Kalan kısım ise Ahmad Alhomsi ye aittir.
+  */
+
   // Function to handle changes in quality selection
   const handleQualityChange = (event: any) => {
     setSelectedQuality(event.target.value);

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -8,10 +8,6 @@ import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import Image from "next/image";
 const youtube = require('youtube-metadata-from-url');
-
-
-
-
 
 export default function Home() {
   const [loadingMp3, setLoadingMp3] = useState(false);
@@ -28,17 +24,11 @@ export default function Home() {
   const [isPremium, setIsPremium] = useState(true);
   const [selectedQuality, setSelectedQuality] = useState('highest');
 
-
-
   interface DownloadItem {
     url: string;
     fileName: string;
     timestamp: Date;
   }
-
-  /*
-  Interface ve oop componentler Ibrahim Arda Doğan a aittir. Kalan kısım ise Ahmad Alhomsi ye aittir.
-  */
 
   // Function to handle changes in quality selection
   const handleQualityChange = (event: any) => {
@@ -54,16 +44,14 @@ export default function Home() {
       const response = await axios.post('/api/getThumbnail', { url: youtubeLink }); // Assuming the backend API returns thumbnail URL directly
       setThumbnailUrl(response.data); // Set the thumbnail URL in state
       console.log("Thumbnail Link: " + response.data);
-
     } catch (error) {
       console.log('Error fetching thumbnail:', error);
       // Handle error if needed
     }
   }
+
   const data = useUser();
   const user = data.user;
-
-
 
   useEffect(() => {
     let userType: string;
@@ -92,15 +80,12 @@ export default function Home() {
       if (userType === "Premium") {
         console.log("No ads");
         setIsPremium(true)
-      }
-      else
+      } else {
         setIsPremium(false)
-
-
+      }
     };
 
     checkUserType();
-
   }, []);
 
   async function getTitle(url: string) {
@@ -114,12 +99,9 @@ export default function Home() {
     }
   }
 
-
   async function downloadFile(url: string, type: string) {
     try {
-
       // Set the last downloaded link in cookies
-
       setCookie('lastDownloadedLink', url, 1);
       console.log("Cookie Set: " + url);
 
@@ -131,7 +113,6 @@ export default function Home() {
 
       setError("");
 
-
       const response = await axios.post('/api/yt', { url, type, selectedQuality }, { responseType: 'blob' });
 
       const blobUrl = URL.createObjectURL(response.data);
@@ -139,12 +120,10 @@ export default function Home() {
       const link = document.createElement('a');
       link.href = blobUrl;
 
-
       const title = await getTitle(url);
       const fileName = `${title}.${type}`;
 
       console.log("Video to download: " + title); // Use the title here
-
 
       link.download = `${title}.${type}`;
 
@@ -217,9 +196,8 @@ export default function Home() {
     return '';
   }
 
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2 gap-y-2">
+    <div className="flex flex-col items-center justify-center min-h-screen py-2 gap-y-2 px-4">
       {thumbnailUrl && (
         <div className="thumbnail-frame mt-4 relative w-full max-w-lg" style={{ aspectRatio: '16/9' }}>
           <Image
@@ -232,55 +210,55 @@ export default function Home() {
         </div>
       )}
 
-      {(loadingMp3 || loadingMp4) && <ReactLoading type={"cylon"} color="#fff" />
-      }
+      {(loadingMp3 || loadingMp4) && <ReactLoading type={"cylon"} color="#fff" />}
       {error && <div className="text-red-500 mb-4">{error}</div>}
 
-      <div>
+      <div className="flex flex-col md:flex-row items-center w-full max-w-2xl gap-2">
         <input
           type="text"
           value={youtubeLink}
           onChange={handleInputChange}
           placeholder="Enter YouTube link"
-          className="rounded-md px-3 py-2 mr-2 mb-1 w-96 text-blue-600 focus:outline-none"
+          className="rounded-md px-3 py-2 w-full md:w-auto flex-grow text-blue-600 focus:outline-none"
         />
 
-
-        <select value={selectedQuality} onChange={handleQualityChange} className="rounded-md px-2 py-2 mt-1 mb-1 w-32  text-blue-600 focus:outline-none">
+        <select
+          value={selectedQuality}
+          onChange={handleQualityChange}
+          className="rounded-md px-2 py-2 md:w-32 text-blue-600 focus:outline-none"
+        >
           <option value="default" disabled>Select Quality</option>
           <option value="lowest">Lowest</option>
           <option value="highest">Highest</option>
         </select>
-
       </div>
 
-      <div className="flex">
+      <div className="flex flex-col md:flex-row  gap-2  max-w-2xl mt-2">
         <button
           onClick={() => handleDownload('mp3')}
           disabled={loadingMp3}
-          className="bg-blue-900 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg mr-2"
+          className="bg-blue-900 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg w-full md:w-auto"
         >
           {loadingMp3 ? "Downloading..." : "Download MP3"}
         </button>
         <button
           onClick={() => handleDownload('mp4')}
           disabled={loadingMp4}
-          className="bg-blue-900 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg mr-2"
+          className="bg-blue-900 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg w-full md:w-auto"
         >
           {loadingMp4 ? "Downloading..." : "Download MP4"}
         </button>
       </div>
-      {lastDownloadedLink && <div className="mt-4">Last link: {lastDownloadedLink}</div>}
+      
+      {lastDownloadedLink && <div className="mt-4 text-center w-full px-4">Last link: {lastDownloadedLink}</div>}
 
-      {downloadHistory.length > 0 && <DownloadHistory downloadHistory={downloadHistory} onHistoryItemClick={handleHistoryItemClick} />} {/* Use the DownloadHistory component */}
+      {downloadHistory.length > 0 && (
+        <DownloadHistory downloadHistory={downloadHistory} onHistoryItemClick={handleHistoryItemClick} />
+      )}
 
-
-
-
-
+      
       <Ad isPremium={isPremium} />
     </div>
-
   );
 
   function Ad({ isPremium }: { isPremium: boolean }) {
@@ -297,6 +275,4 @@ export default function Home() {
       </>
     );
   }
-
-
 }

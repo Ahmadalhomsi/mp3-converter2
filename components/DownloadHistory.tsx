@@ -19,8 +19,6 @@ interface DownloadHistoryProps {
   onHistoryItemClick: (url: string) => void; // Callback function to set the input value
 }
 
-
-
 const DownloadHistory: React.FC<DownloadHistoryProps> = ({ downloadHistory, onHistoryItemClick }) => {
   const formatDate = (timestamp: Date) => {
     const date = new Date(timestamp);
@@ -28,12 +26,20 @@ const DownloadHistory: React.FC<DownloadHistoryProps> = ({ downloadHistory, onHi
   };
 
   return (
-    <div className="mt-4">
-      <h2 className="text-xl font-semibold mb-2">Download History</h2>
-      <ul>
+    <div className="mt-4 w-full max-w-3xl mx-auto truncate">
+      <h2 className="text-lg md:text-xl font-semibold mb-2">Download History</h2>
+      <ul className="space-y-2">
         {downloadHistory.map((item, index) => (
-          <li key={index} className="mb-2 cursor-pointer hover:bg-gray-800 rounded-lg p-2" onClick={() => onHistoryItemClick(item.url)}>
-            <span className="mr-2">{item.url}</span> - <span className="mr-2">{item.fileName}</span> - <span>{formatDate(item.timestamp)}</span>
+          <li 
+            key={index} 
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-700 hover:bg-gray-800 rounded-lg p-2 cursor-pointer text-white" 
+            onClick={() => onHistoryItemClick(item.url)}
+          >
+            <div className="flex-1 truncate ">
+              <span className="block  font-bold truncate">{item.fileName}</span>
+              <span className="block sm:inline text-sm truncate">{item.url}</span>
+            </div>
+            <span className="text-sm sm:text-right">{formatDate(item.timestamp)}</span>
           </li>
         ))}
       </ul>
